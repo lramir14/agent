@@ -24,10 +24,11 @@ while True:
     print("\n\n")
     if question == "q":
         break
-    
-    review = retriever.invoke(question)
+    # Retrieve relevant documents for the question
+    results = retriever.get_relevant_documents(question) 
+    reviews = "\n\n".join([doc.page_content for doc in results])
     result = chain.invoke ({
-    "reviews":[], 
+    "reviews":reviews, 
     "question":question
     })
     print(result)
