@@ -34,8 +34,8 @@ vector_store = Chroma(
     embedding_function=embeddings
 )
 
-existing_docs=vector_store.get()
-    print(f"🧠 Vector DB contains {len(existing_docs['documents'])} documents.")
+existing_docs = vector_store.get()
+print(f"🧠 Vector DB contains {len(existing_docs['documents'])} documents.")
     
 
 if add_documents:
@@ -51,3 +51,9 @@ else:
 retriever = vector_store.as_retriever(
     search_kwargs={"k":10}
 )
+
+# Test retrieval
+results = retriever.get_relevant_documents("educación 2020 monto pagado")
+print(f"🔍 Retrieved {len(results)} documents:")
+for doc in results[:3]:
+    print(doc.page_content[:200], "...\n")
