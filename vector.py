@@ -20,7 +20,7 @@ if add_documents:
             page_content= row["CICLO"] + row["DESC_PARTIDA_ESPECIFICA"] + row["DESC_PARTIDA_GENERICA"] +
             row["DESC_TIPOGASTO"] + row["ID_ENTIDAD_FEDERATIVA"] + row["MONTO_APROBADO"] + row["MONTO_MODIFICADO"] + 
             row["MONTO_PAGADO"],
-            metadata={"date":row["CICLO"]}
+            metadata={"date":row["CICLO"]},
             id=str(i)
         )
         ids.append(str(i))
@@ -29,15 +29,15 @@ if add_documents:
         
 vector_store = Chroma(
     collection_name="budget",
-    persist_directory=db_location
+    persist_directory=db_location,
     embedding_function=embeddings
 )
 
 if add_documents:
     vector_store.add_documents(documents=documents, ids=ids)
 
-#retrieve to search and lookup for relevant documents 
+#retrieve to search and lookup for relevant documents ## specify how many key articles or results to retrieve back
 
-retriever == vector_store.as_retriever(
-    search_kwargs={"k":10} ## specify how many key articles or results to retrieve back
+retriever = vector_store.as_retriever(
+    search_kwargs={"k":10}
 )
