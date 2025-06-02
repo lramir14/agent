@@ -1,4 +1,5 @@
 from pathlib import Path
+import pandas as pd
 import tiktoken
 import lancedb
 from lancedb.embeddings import get_registry
@@ -80,27 +81,12 @@ def retrieve_similar_docs(table: LanceTable, query: str, query_type: str = 'hybr
     )
     return results
 
-def setup_lancedb():
-    """
-    Setup lancedb table with initial config 
-    """
-    
-    db_path = './db'
-    table_name = 'knowledge' 
-    knowledge_base_dir = './knowledge-file'
-    
-    table = create_lancedb_table(db_path, table_name, overwrite=True)
-    
-    add_documents_to_table(table, knowledge_base_dir) 
-    
-import pandas as pd
-
 def add_csv_to_table(table: LanceTable, csv_path: str, max_tokens: int = 8192):
     """
     Load a CSV file, convert each row to a plain-text document, and add to LanceDB table.
     """
     try:
-        df = pd.read_csv(csv_path)
+        df = pd.read_csv(csv_path, low_memory=False)
     except Exception as e:
         print(f"Error reading CSV file: {e}")
         return
@@ -120,3 +106,22 @@ def add_csv_to_table(table: LanceTable, csv_path: str, max_tokens: int = 8192):
         print(f'Added {len(docs)} CSV-derived documents (chunks) to the table.')
     else:
         print('No rows found or added from CSV.')
+
+
+def setup_lancedb():
+    """
+    Setup lancedb table with initial config 
+    """
+    db_path = './db'
+    table_name = 'knowledge' 
+    knowledge_base_dir = './knowledge-file'
+    csv_path = './data/presupuesto_mexico__2020.csv'
+
+    table = create_lancedb_table(db_path, table_name, overwrite=True)
+
+    add_documents_to_table(table, knowledge_base_dir)
+    add_csv_to_table(table, csv_path)  # this is called inside setup_lancedb()
+
+
+if __name__ == '__main__':
+    setup_lancedb()
