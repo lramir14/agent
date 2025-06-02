@@ -18,33 +18,27 @@ vector_store = Chroma(
 
 # Check if the vector store already has documents
 existing_docs = vector_store.get()
-print(f"🧠 Vector DB contains {len(existing_docs['documents'])} documents.")
+add_documents = len(existing_docs['documents']) == 0
 
-# Only add documents if DB is empty
-if len(existing_docs['documents']) == 0:
-    print("Adding documents to vector store...")
+print(f"🧠 Existing documents: {len(existing_docs['documents'])}")
 
+
+if add_documents:
     documents = []
     ids = []
-
     for i, row in df.iterrows():
-        content = (
-            f"{row['CICLO']} {row['DESC_PARTIDA_ESPECIFICA']} {row['DESC_PARTIDA_GENERICA']} "
-            f"{row['DESC_TIPOGASTO']} {row['ID_ENTIDAD_FEDERATIVA']} {row['MONTO_APROBADO']} "
-            f"{row['MONTO_MODIFICADO']} {row['MONTO_PAGADO']}"
-        )
-        document = Document(
-            page_content=str(content),
-            metadata={"date": row["CICLO"]},
-            id=str(i)
-        )
+        doc_text = f"{row['CICLO']} {row['DESC_PARTIDA_ESPECIFICA']} {row['MONTO_APROBADO']}"
+        document = Document(page_content=doc_text, metadata={"date": row['CICLO']}, id=str(i))
         documents.append(document)
         ids.append(str(i))
+        if i < 3:
+            print(f"📝 Preview doc {i}: {doc_text[:80]}")
+
     vector_store.add_documents(documents=documents, ids=ids)
     vector_store.persist()
-    print(f"✅ Added {len(documents)} documents to the vector database.")
+    print(f"✅ Added and persisted {len(documents)} documents.")
 else:
-    print(f"📂 Loaded existing vector database from {db_location}.")
+    print("📦 Vector store already exists, skipping add.")
 # Create retriever
 retriever = vector_store.as_retriever(search_kwargs={"k": 10})
 
