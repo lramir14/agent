@@ -5,7 +5,7 @@ import os
 import pandas as pd 
 
 
-df = pd.read_csv("data/presupuesto_mexico__2020.csv")
+df = pd.read_csv("data/presupuesto_mexico__2020.csv", low_memory=False)
 embeddings = OllamaEmbeddings(model="mxbai-embed-large")
 
 db_location = "./chroma_langchain.db"
@@ -17,9 +17,10 @@ if add_documents:
     
     for i, row in df.iterrows():
         document = Document(
-            page_content= row["CICLO"] + row["DESC_PARTIDA_ESPECIFICA"] + row["DESC_PARTIDA_GENERICA"] +
-            row["DESC_TIPOGASTO"] + row["ID_ENTIDAD_FEDERATIVA"] + row["MONTO_APROBADO"] + row["MONTO_MODIFICADO"] + 
-            row["MONTO_PAGADO"],
+            page_content = str(row["CICLO"]) + " " + str(row["DESC_PARTIDA_ESPECIFICA"]) + " " + \
+               str(row["DESC_PARTIDA_GENERICA"]) + " " + str(row["DESC_TIPOGASTO"]) + " " + \
+               str(row["ID_ENTIDAD_FEDERATIVA"]) + " " + str(row["MONTO_APROBADO"]) + " " + \
+               str(row["MONTO_MODIFICADO"]) + " " + str(row["MONTO_PAGADO"]),
             metadata={"date":row["CICLO"]},
             id=str(i)
         )
@@ -35,7 +36,12 @@ vector_store = Chroma(
 
 if add_documents:
     vector_store.add_documents(documents=documents, ids=ids)
-
+    vector_store.persist()
+    print(f"✅ Added {len(documents)} documents to the vector database.")
+else:
+    print(f"📂 Loaded existing vector database from {db_location}.")
+    
+    
 #retrieve to search and lookup for relevant documents ## specify how many key articles or results to retrieve back
 
 retriever = vector_store.as_retriever(

@@ -7,7 +7,7 @@ model = OllamaLLM(model="qwen3:0.6b")
 template = """
 You are an expert in economics and budget analysis.
 
-Here is a database with 2018 budget for Mexico: {reviews}
+Here is a database with 2020 budget for Mexico: {reviews}
 
 Here is the question to answer: {question}
 
