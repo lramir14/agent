@@ -6,7 +6,7 @@ import pandas as pd
 
 
 df = pd.read_csv("data/presupuesto_mexico__2020.csv", low_memory=False)
-embeddings = OllamaEmbeddings(model="mxbai-embed-large")
+embeddings = OllamaEmbeddings(model="nomic-embed-text:latest")
 
 db_location = "./chroma_langchain.db"
 add_documents = True
