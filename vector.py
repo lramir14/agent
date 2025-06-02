@@ -9,7 +9,8 @@ df = pd.read_csv("data/presupuesto_mexico__2020.csv", low_memory=False)
 embeddings = OllamaEmbeddings(model="mxbai-embed-large")
 
 db_location = "./chroma_langchain.db"
-add_documents = not os.path.exists(db_location)
+add_documents = True
+#not os.path.exists(db_location) because rn is not working
 
 if add_documents:
     documents = []
