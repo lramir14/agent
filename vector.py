@@ -31,10 +31,12 @@ if add_documents:
 vector_store = Chroma(
     collection_name="budget",
     persist_directory=db_location,
-    embedding_function=embeddings,
-    existing_docs=vector_store.get()
-    print(f"🧠 Vector DB contains {len(existing_docs['documents'])} documents.")
+    embedding_function=embeddings
 )
+
+existing_docs=vector_store.get()
+    print(f"🧠 Vector DB contains {len(existing_docs['documents'])} documents.")
+    
 
 if add_documents:
     vector_store.add_documents(documents=documents, ids=ids)
