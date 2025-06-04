@@ -5,3 +5,14 @@ db/knowledge.lance/_versions/10.manifest
 db/knowledge.lance/data/5b0a943f-5a67-4d75-a7b2-ef77f600a55a.lance
 db/knowledge.lance/
 __pycache__/lancedb_setup.cpython-311.pyc
+data/pearl-primer.pdf
+.gitignore
+data/Elwert, Felix, and Christopher Winship. “Endogenous selection bias The problem of conditioning on a collider variable,” 2014. 40 (1)..pdf
+.gitignore
+data/Cinelli et al. - 2021 - A crash course in good and bad controls.pdf
+data/Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf
+data/Aonow, Peter M., and Cyrus Samii. “Does regression produce representative estimates of causal effects” 2016. 60 (1).pdf
+data/A Second Chance to Get Causal Inference Right A Classification of Data Science Tasks.pdf
+data/ddp.textbook.pdf
+data/Journal of the Royal Statistical Society  Series B  Statistical Methodology - 2019 - Cinelli - Making sense of sensitivity .pdf
+data/IV.20240129.pdf
