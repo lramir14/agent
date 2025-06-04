@@ -1,82 +1,91 @@
+import os
+# Block any OpenAI initialization attempts
+os.environ["OPENAI_API_KEY"] = "local"
+os.environ["OPENAI_API_BASE"] = "http://localhost:11434"  # Point to Ollama if anything tries to use it
 
-import lancedb
 from langchain_community.llms import Ollama
+from langchain_core.prompts import ChatPromptTemplate
 from lancedb_setup import setup_lancedb, retrieve_similar_docs
-from typing import Optional, List
+import warnings
 
-class LocalAgent:
-    """Simplified agent class for Ollama"""
-    def __init__(self, name: str, model: str, system_prompt: str):
-        self.name = name
-        self.llm = Ollama(model=model)
-        self.system_prompt = system_prompt
-    
-    def run_sync(self, prompt: str, message_history: Optional[List] = None) -> dict:
-        full_prompt = f"{self.system_prompt}\n\n{prompt}"
-        response = self.llm.invoke(full_prompt)
-        return {
-            'data': response,
-            'all_messages': message_history + [{'role': 'assistant', 'content': response}] 
-                          if message_history else None
-        }
+# Suppress all OpenAI-related warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*openai.*")
 
-def setup_knowledge_query_agent() -> LocalAgent:
-    """Optimizes queries for document retrieval"""
-    return LocalAgent(
-        name='Query Optimizer',
-        model='qwen3:0.6b',
-        system_prompt="""
-        Convert questions into concise search queries using key terms.
-        Example:
-        Input: "How much was spent on schools last year?"
-        Output: "education budget 2023"
-        """
-    )
-
-def setup_main_agent() -> LocalAgent:
-    """Generates answers using retrieved context"""
-    return LocalAgent(
-        name='RAG Assistant',
-        model='qwen3:0.6b',
-        system_prompt="""
-        Answer ONLY using the provided context. Be concise.
-        If context is insufficient, say "I don't have enough information."
-        """
-    )
-
-def main():
-    # Initialize
-    knowledge_table = setup_lancedb()
-    knowledge_query_agent = setup_knowledge_query_agent()
-    main_agent = setup_main_agent()
-    message_history = None
-    
-    # Chat loop
-    while True:
-        query = input("\nEnter query (type 'exit' to quit): ").strip()
-        if query.lower() == 'exit':
-            break
+class LocalRAGSystem:
+    def __init__(self):
+        print("Initializing local RAG system...")
+        self.db = setup_lancedb()
+        self.llm = Ollama(model="qwen3:0.6b")
+        self._verify_setup()
         
-        # Step 1: Query optimization
-        res = knowledge_query_agent.run_sync(query)
-        knowledge_query = res['data']
-        print(f"\nOptimized query: {knowledge_query}")
+        self.query_prompt = ChatPromptTemplate.from_template(
+            "Extract key search terms: {question}\nQuery:"
+        )
+        self.answer_prompt = ChatPromptTemplate.from_template(
+            "Using ONLY this context:\n{context}\n\nQuestion: {question}\nAnswer:"
+        )
+
+    def _verify_setup(self):
+        """Verify everything is working locally"""
+        try:
+            test_vec = self.db._embedding_function("test")
+            assert len(test_vec) == 768, "Invalid embedding dimension"
+        except Exception as e:
+            raise RuntimeError(f"Setup verification failed: {str(e)}")
+
+    def generate_response(self, question: str):
+        # Generate search query
+        search_query = (self.query_prompt | self.llm).invoke(
+            {"question": question}
+        ).strip()
         
-        # Step 2: Document retrieval
-        retrieved_docs = retrieve_similar_docs(knowledge_table, knowledge_query, limit=5)
+        print(f"Searching for: {search_query}")
         
-        # Step 3: Context filtering
-        knowledge_context = "\n".join(
-            doc['text'] for doc in retrieved_docs 
-            if doc.get('_relevance_score', 0) > 0.5  # Adjust threshold as needed
+        # Retrieve documents (force local-only)
+        docs = retrieve_similar_docs(
+            self.db,
+            search_query,
+            query_type="vector"  # Disable hybrid search
         )
         
-        # Step 4: Generate response
-        prompt = f"Context:\n{knowledge_context}\n\nQuestion: {query}"
-        response = main_agent.run_sync(prompt, message_history=message_history)
+        context = "\n".join(d['text'] for d in docs)
+        answer = (self.answer_prompt | self.llm).invoke({
+            "question": question,
+            "context": context
+        })
         
-        print(f"\nAnswer: {response['data']}")
-        message_history = response['all_messages']
+        return {
+            "question": question,
+            "answer": answer,
+            "docs": docs
+        }
+
+def main():
+    try:
+        rag = LocalRAGSystem()
+        print("System ready. Type 'quit' to exit.")
+        
+        while True:
+            question = input("\nYour question: ").strip()
+            if question.lower() in ('quit', 'exit'):
+                break
+                
+            result = rag.generate_response(question)
+            print(f"\nAnswer: {result['answer']}")
+            if result['docs']:
+                print("\nSources used:")
+                for i, doc in enumerate(result['docs'], 1):
+                    print(f"[{i}] {doc['text'][:150]}...")
+            else:
+                print("\nNo relevant documents found")
+                
+    except Exception as e:
+        print(f"\nError: {str(e)}")
+        print("Troubleshooting steps:")
+        print("1. Run 'ollama serve' in another terminal")
+        print("2. Verify models: 'ollama list' should show qwen3:0.6b and nomic-embed-text")
+        print("3. Test embeddings directly with:")
+        print("   python -c \"from langchain_community.embeddings import OllamaEmbeddings; print(len(OllamaEmbeddings(model='nomic-embed-text').embed_query('test')))\"")
 
 if __name__ == "__main__":
     main()

@@ -1,37 +1,32 @@
 from pathlib import Path
 import pandas as pd
-from langchain_ollama import OllamaEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import lancedb
-from lancedb.pydantic import LanceModel, Vector
-from lancedb.rerankers import LinearCombinationReranker
-from lancedb.table import Table as LanceTable
+import numpy as np
+import warnings
 
+# Completely disable OpenAI-related warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*openai.*")
 
 # ─── (1) Define the Ollama‐based embedding function ────────────────────────────
-class OllamaEmbeddingFunction:
+class LocalEmbeddingFunction:
     def __init__(self, model_name="nomic-embed-text"):
         self.embeddings = OllamaEmbeddings(model=model_name)
-
+        self.ndims = 768
+        
     def __call__(self, texts):
         if isinstance(texts, str):
             return self.embeddings.embed_query(texts)
         return self.embeddings.embed_documents(texts)
+        
+    def generate_embeddings(self, texts):
+        """Bypass any OpenAI-related code paths"""
+        if isinstance(texts, str):
+            return np.array([self.embeddings.embed_query(texts)])
+        return np.array(self.embeddings.embed_documents(texts))
 
-    def ndims(self):
-        return 768  # Adjust if your Ollama model uses a different dimension
-
-    @staticmethod
-    def SourceField():
-        return None
-
-    @staticmethod
-    def VectorField():
-        return Vector(768)
-
-
-# Instantiate the embedding function
-embedding_func = OllamaEmbeddingFunction("nomic-embed-text")
+embedding_func = LocalEmbeddingFunction()
 
 
 # ─── (2) LanceDB schema ───────────────────────────────────────────────────────
@@ -53,9 +48,22 @@ def chunk_text(text: str, chunk_size: int = 1000, chunk_overlap: int = 200):
 # ─── (4) Create (or overwrite) the LanceDB table ───────────────────────────────
 def create_lancedb_table(db_path: str, table_name: str, overwrite: bool = True):
     db = lancedb.connect(db_path)
-    mode = "overwrite" if overwrite else "create"
-    table = db.create_table(table_name, schema=Document, mode=mode)
-    table.create_fts_index("text", replace=overwrite)
+    
+    # Create table with explicit schema
+    schema = {
+        "id": str,
+        "text": str,
+        "vector": lancedb.vector(embedding_func.ndims)
+    }
+    
+    table = db.create_table(
+        table_name,
+        schema=schema,
+        mode="overwrite" if overwrite else "create"
+    )
+    
+    # Manually inject our embedding function
+    table._embedding_function = embedding_func
     return table
 
 
@@ -153,4 +161,4 @@ def setup_lancedb():
  #   table = setup_lancedb()
   #  results = retrieve_similar_docs(table, "education")
    # for doc in results[:3]:
-    #    print(f"ID: {doc['id']}\nText: {doc['text'][:200]}...\n")
+     #   print(f"ID: {doc['id']}\nText: {doc['text'][:200]}...\n")
