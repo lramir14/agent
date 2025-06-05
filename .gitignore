@@ -19,3 +19,9 @@ data/IV.20240129.pdf
 data/mx_bud_2020.csv
 ddp.textbook.pdf
 pearl-primer.pdf
+chroma_database/e521f0ba-bef1-492f-9c84-477ae0233017/data_level0.bin
+chroma_database/e521f0ba-bef1-492f-9c84-477ae0233017/header.bin
+chroma_database/e521f0ba-bef1-492f-9c84-477ae0233017/length.bin
+chroma_database/e521f0ba-bef1-492f-9c84-477ae0233017/link_lists.bin
+chroma_database/e521f0ba-bef1-492f-9c84-477ae0233017/index_metadata.pickle
+chroma_database/chroma.sqlite3
