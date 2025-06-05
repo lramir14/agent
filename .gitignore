@@ -25,3 +25,12 @@ chroma_database/e521f0ba-bef1-492f-9c84-477ae0233017/length.bin
 chroma_database/e521f0ba-bef1-492f-9c84-477ae0233017/link_lists.bin
 chroma_database/e521f0ba-bef1-492f-9c84-477ae0233017/index_metadata.pickle
 chroma_database/chroma.sqlite3
+Qwen3-Embedding-0.6B-Q8_0.gguf
+.gitignore
+chroma_database/__pycache__/manager.cpython-311.pyc
+chroma_database/__pycache__/__init__.cpython-311.pyc
+chroma_database/d4fdbf7b-a64b-43b7-93ea-c1757ec86025/data_level0.bin
+.gitignore
+chroma_database/d4fdbf7b-a64b-43b7-93ea-c1757ec86025/length.bin
+chroma_database/d4fdbf7b-a64b-43b7-93ea-c1757ec86025/header.bin
+chroma_database/d4fdbf7b-a64b-43b7-93ea-c1757ec86025/link_lists.bin

@@ -1,15 +1,15 @@
 import gradio as gr
-from chroma_db.manager import ChromaManager
+from chroma_database.manager import ChromaManager
 import time
 
 def create_interface():
     db = ChromaManager()
     
     with gr.Blocks(title="Document QA System", theme=gr.themes.Soft()) as app:
-        gr.Markdown("# 📚 Document QA System")
+        gr.Markdown("# 📚 RA for budget analysis")
         
         # Upload Section
-        with gr.Tab("📤 Upload Documents"):
+        with gr.Tab("📤 Upload Documents to our knowledge database to help analyze budgets."):
             with gr.Row():
                 with gr.Column():
                     csv_upload = gr.File(label="CSV File", file_types=[".csv"])
@@ -22,7 +22,7 @@ def create_interface():
                     pdf_btn = gr.Button("Upload", variant="primary")
         
         # QA Section
-        with gr.Tab("❓ Ask Questions"):
+        with gr.Tab("❓ Ask Questions about the knowledge database"):
             question = gr.Textbox(label="Question", placeholder="Ask about your documents...")
             answer = gr.Textbox(label="Answer", lines=5, interactive=False)
             sources = gr.DataFrame(

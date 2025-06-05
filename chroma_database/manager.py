@@ -6,6 +6,9 @@ import chromadb
 import ollama
 import pypdf
 from typing import List, Tuple, Optional
+import time
+from chromadb.utils.embedding_functions import OllamaEmbeddingFunction
+
 
 class ChromaManager:
     def __init__(self, persist_dir: str = "./chroma_database", collection_name: str = "RAGTutorial"):
@@ -16,10 +19,10 @@ class ChromaManager:
     def _create_doc_id(self, source: str, identifier: str) -> str:
         return f"{os.path.basename(source)}_{identifier}"
 
-    def upload_csv(self, file_path: str, max_rows: Optional[int] = None) -> Tuple[int, int]:
-        existing_ids = set(self.collection.get()["ids"])
+    def upload_csv(self, file_path: str, max_rows: Optional[int] = None, batch_size: int = 1000) -> Tuple[int, int]:
         uploaded = 0
         processed = 0
+        start_total = time.time()
 
         with open(file_path, "r", encoding="utf-8") as f:
             reader = csv.reader(f)
@@ -30,22 +33,32 @@ class ChromaManager:
                 if max_rows and i >= max_rows:
                     break
 
-                if not any(v.strip() for v in row):  # skip empty rows
+                if not any(v.strip() for v in row):
                     continue
 
                 row_text = " | ".join(f"{h}: {v.strip()}" for h, v in zip(header, row))
                 doc_id = self._create_doc_id(file_path, f"row_{i}")
 
-                if doc_id not in existing_ids:
-                    texts.append(row_text)
-                    ids.append(doc_id)
+                texts.append(row_text)
+                ids.append(doc_id)
                 processed += 1
 
-            if texts:
-                self.collection.add(documents=texts, ids=ids)
-                uploaded = len(texts)
+                if len(texts) >= batch_size:
+                    start_batch = time.time()
+                    self.collection.add(documents=texts, ids=ids)
+                    print(f"Uploaded batch of {len(texts)} in {time.time() - start_batch:.2f}s")
+                    uploaded += len(texts)
+                    texts, ids = [], []
 
+            if texts:
+                start_batch = time.time()
+                self.collection.add(documents=texts, ids=ids)
+                print(f"Uploaded final batch of {len(texts)} in {time.time() - start_batch:.2f}s")
+                uploaded += len(texts)
+
+        print(f"\nTotal time: {time.time() - start_total:.2f}s")
         return (processed, uploaded)
+
 
     def upload_pdf(self, file_path: str) -> Tuple[int, int]:
         existing_ids = set(self.collection.get()["ids"])

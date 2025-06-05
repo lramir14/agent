@@ -1,4 +1,4 @@
-from chroma_db.manager import ChromaManager
+from chroma_database.manager import ChromaManager
 
 def main():
     db = ChromaManager()
