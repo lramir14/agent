@@ -19,6 +19,7 @@ class ChromaManager:
     def upload_csv(self, file_path: str, max_rows: Optional[int] = None) -> Tuple[int, int]:
         existing_ids = set(self.collection.get()["ids"])
         uploaded = 0
+        processed = 0
         
         with open(file_path, "r", encoding="utf-8") as f:
             reader = csv.reader(f)
@@ -35,12 +36,13 @@ class ChromaManager:
                 if row_text and doc_id not in existing_ids:
                     texts.append(row_text)
                     ids.append(doc_id)
+                processed += 1
             
             if texts:
                 self.collection.add(documents=texts, ids=ids)
                 uploaded = len(texts)
         
-        return (i+1, uploaded)
+        return (processed, uploaded)
 
     def upload_pdf(self, file_path: str) -> Tuple[int, int]:
         existing_ids = set(self.collection.get()["ids"])
