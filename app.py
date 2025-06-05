@@ -5,7 +5,7 @@ import time
 def create_interface():
     db = ChromaManager()
     
-    with gr.Blocks(title="Document QA System", theme=gr.themes.Soft()) as app:
+    with gr.Blocks(title="RA Local system", theme=gr.themes.Soft()) as app:
         gr.Markdown("# 📚 RA for budget analysis")
         
         # Upload Section
