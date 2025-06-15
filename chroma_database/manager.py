@@ -8,7 +8,7 @@ import pypdf
 from typing import List, Tuple, Optional
 import time
 from chromadb.utils.embedding_functions import OllamaEmbeddingFunction
-
+from duckduckgo_search import DDGS
 
 class ChromaManager:
     def __init__(self, persist_dir: str = "./chroma_database", collection_name: str = "RAGTutorial"):
@@ -102,3 +102,23 @@ class ChromaManager:
 
         except Exception as e:
             return f"Error: {str(e)}", []
+
+    def search_web(self, query: str, num_results: int = 5):
+        """Use DuckDuckGo to search the web and return result snippets."""
+        with DDGS() as ddgs:
+            results = ddgs.text(query, region='wt-wt', safesearch='moderate', max_results=num_results)
+            return [r["body"] for r in results]
+        
+    def query_with_web(self, query: str):
+        """Combine local RAG with web search context."""
+        # Local search
+        local_answer, local_sources = self.query(query)
+
+        # Web search
+        web_snippets = self.search_web(query)
+
+        # Combine answer and sources
+        final_answer = f"{local_answer}\n\n🌐 Web Insights:\n" + "\n".join(f"- {s}" for s in web_snippets[:3])
+        combined_sources = local_sources + web_snippets
+
+        return final_answer, [[s] for s in combined_sources]
